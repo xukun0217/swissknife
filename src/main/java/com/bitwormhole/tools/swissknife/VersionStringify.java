@@ -296,6 +296,10 @@ public class VersionStringify extends KnifeMojo {
 			prop.setProperty(PropKey.version_str___x, vi.versionString);
 
 			try {
+				File dir = out_prop.getParentFile();
+				if (!dir.exists()) {
+					dir.mkdirs();
+				}
 				out = new FileOutputStream(out_prop);
 				prop.store(out, "auto-generate by " + this);
 			} finally {
