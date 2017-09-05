@@ -2,9 +2,15 @@ package com.bitwormhole.tools.swissknife.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,12 +19,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.bitwormhole.tools.swissknife.KnifeContext;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.bitwormhole.tools.swissknife.DotNetI18nProperties;
+import com.bitwormhole.tools.swissknife.context.KnifeContext;
 import com.bitwormhole.tools.swissknife.utils.IOTools;
 
 public class DoDotNetI18nProperties {
 
 	static final PrintStream out = System.out;
+	static final String enc = "UTF-8";
+	static final String newline = "\r\n";
 
 	public static Runnable dotNetToProp(KnifeContext kc) {
 		Task task = new Task(kc);
@@ -167,7 +185,8 @@ public class DoDotNetI18nProperties {
 		private void loadConfig() throws IOException {
 			InputStream in = null;
 			try {
-				String name = this.getClass().getName() + ".properties";
+				Class<?> ref = DotNetI18nProperties.class;
+				String name = ref.getName() + ".properties";
 				File dir = task.pom.getParentFile();
 				File file = new File(dir, name);
 				in = new FileInputStream(file);
@@ -208,12 +227,10 @@ public class DoDotNetI18nProperties {
 
 			final String name = path.getName();
 			final File dir = path.getParentFile();
-			final String raw_name = name.substring(0,
-					name.length() - suffix.length())
-					+ ".resx";
+			final String raw_name = name.substring(0, name.length() - suffix.length()) + ".resx";
 
 			File raw_resx = new File(dir, raw_name);
-			File prop_file = new File(this.task.prop_dir, name + ".properties");
+			File prop_file = new File(this.task.prop_dir, name + ".txt"); // ".properties");
 
 			ResxGroup resx_def = this.task.getResx(raw_resx);
 			resx_def.put(path, prop_file);
@@ -254,19 +271,92 @@ public class DoDotNetI18nProperties {
 
 	static class ResxIO {
 
+		public Document loadXML(File file) {
+			try {
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				return builder.parse(file);
+			} catch (SAXException | IOException e) {
+				throw new RuntimeException(e);
+			} catch (ParserConfigurationException e) {
+				throw new RuntimeException(e);
+			} finally {
+			}
+		}
+
 		public Properties loadPropertiesFromResx(File file) {
-			// TODO Auto-generated method stub
-			return null;
+			Document dom = this.loadXML(file);
+			Properties prop = new Properties();
+			Element root = dom.getDocumentElement();
+			NodeList nlist = root.getElementsByTagName("data");
+			for (int i = nlist.getLength() - 1; i >= 0; --i) {
+				Element data = (Element) nlist.item(i);
+				String name = this.getAttributeSafe(data, "name");
+				String type = this.getAttributeSafe(data, "type");
+				String value = data.getTextContent().trim();
+				if (name.startsWith(">>") || (type.length() != 0)) {
+					continue;
+				}
+				// out.println(" " + name + " = " + value);
+				prop.setProperty(name, value);
+			}
+			return prop;
+		}
+
+		private String getAttributeSafe(Element node, String key) {
+			String value = node.getAttribute(key);
+			if (value == null) {
+				return "";
+			} else {
+				return value.trim();
+			}
 		}
 
 		public Properties loadProperties(File file) {
-			// TODO Auto-generated method stub
-			return null;
+			InputStream in = null;
+			Reader reader = null;
+			try {
+				Properties prop = new Properties();
+				if (!file.exists()) {
+					return prop;
+				}
+				in = new FileInputStream(file);
+				reader = new InputStreamReader(in, enc);
+				prop.load(reader);
+				// out.println(" load prop = " + prop);
+				return prop;
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				IOTools.close(in);
+			}
 		}
 
 		public void save(Properties prop, File file) {
-			// TODO Auto-generated method stub
-
+			OutputStream output = null;
+			Writer writer = null;
+			try {
+				File dir = file.getParentFile();
+				if (!dir.exists()) {
+					dir.mkdirs();
+				}
+				output = new FileOutputStream(file);
+				writer = new OutputStreamWriter(output, enc);
+				writer.append("# ").append(file.getName()).append(newline).append(newline);
+				Enumeration<Object> keys = prop.keys();
+				for (; keys.hasMoreElements();) {
+					String key = keys.nextElement().toString();
+					String value = prop.getProperty(key);
+					writer.append(key).append('=').append(value).append(newline);
+					// out.println(key + " = " + value);
+				}
+				writer.flush();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				IOTools.close(writer);
+				IOTools.close(output);
+			}
 		}
 
 	}

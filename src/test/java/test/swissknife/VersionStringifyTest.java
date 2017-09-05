@@ -4,9 +4,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Test;
 
-import test.swissknife.helper.TestingHelper;
+import com.bitwormhole.tools.swissknife.VersionStringify;
 
-import com.bitwormhole.tools.swissknife.mojo.VersionStringify;
+import test.swissknife.helper.TestingHelper;
 
 public class VersionStringifyTest {
 

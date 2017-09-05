@@ -2,8 +2,8 @@ package test.swissknife.helper;
 
 import org.apache.maven.plugin.logging.Log;
 
-import com.bitwormhole.tools.swissknife.KnifeContext;
-import com.bitwormhole.tools.swissknife.KnifeMojo;
+import com.bitwormhole.tools.swissknife.context.KnifeContext;
+import com.bitwormhole.tools.swissknife.context.KnifeMojo;
 
 public class TestingHelper {
 

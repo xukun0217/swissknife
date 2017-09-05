@@ -4,10 +4,10 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Test;
 
-import test.swissknife.helper.TestingHelper;
+import com.bitwormhole.tools.swissknife.DotNetI18nFromProperties;
+import com.bitwormhole.tools.swissknife.DotNetI18nToProperties;
 
-import com.bitwormhole.tools.swissknife.mojo.DotNetI18nFromProperties;
-import com.bitwormhole.tools.swissknife.mojo.DotNetI18nToProperties;
+import test.swissknife.helper.TestingHelper;
 
 public class DotNetI18nTest {
 

@@ -1,11 +1,11 @@
-package com.bitwormhole.tools.swissknife.mojo;
+package com.bitwormhole.tools.swissknife;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 
-import com.bitwormhole.tools.swissknife.KnifeContext;
-import com.bitwormhole.tools.swissknife.KnifeMojo;
+import com.bitwormhole.tools.swissknife.context.KnifeContext;
+import com.bitwormhole.tools.swissknife.context.KnifeMojo;
 import com.bitwormhole.tools.swissknife.impl.DoDotNetI18nProperties;
 
 @Mojo(name = "dotnet-i18n-from-properties")

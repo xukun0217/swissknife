@@ -1,4 +1,4 @@
-package com.bitwormhole.tools.swissknife.mojo;
+package com.bitwormhole.tools.swissknife;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,8 +24,8 @@ import org.eclipse.jgit.lib.RefDatabase;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 
-import com.bitwormhole.tools.swissknife.KnifeContext;
-import com.bitwormhole.tools.swissknife.KnifeMojo;
+import com.bitwormhole.tools.swissknife.context.KnifeContext;
+import com.bitwormhole.tools.swissknife.context.KnifeMojo;
 import com.bitwormhole.tools.swissknife.utils.IOTools;
 import com.bitwormhole.tools.swissknife.utils.StringTools;
 import com.google.gson.Gson;
@@ -150,8 +150,7 @@ public class VersionStringify extends KnifeMojo {
 			vi.buildTimeString = this.timeToString(vi.buildTime);
 			vi.commitTimeString = this.timeToString(vi.commitTime);
 			String fmt = "%s-%s-%s";
-			return String.format(fmt, vi.branch, vi.commitTimeString,
-					vi.commitShortId);
+			return String.format(fmt, vi.branch, vi.commitTimeString, vi.commitShortId);
 		}
 
 		private String timeToString(long ms) {
@@ -213,7 +212,7 @@ public class VersionStringify extends KnifeMojo {
 			try {
 
 				String enc = "UTF-8";
-				String name = Config.class.getName() + ".json";
+				String name = VersionStringify.class.getName() + ".json";
 				File file = new File(this.base, name);
 
 				helper.makeConfigFileIfNeed(file);

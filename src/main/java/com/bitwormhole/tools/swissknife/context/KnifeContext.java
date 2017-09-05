@@ -1,4 +1,4 @@
-package com.bitwormhole.tools.swissknife;
+package com.bitwormhole.tools.swissknife.context;
 
 import java.io.File;
 

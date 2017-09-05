@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import com.bitwormhole.tools.swissknife.KnifeContext;
+import com.bitwormhole.tools.swissknife.context.KnifeContext;
 
 public class TestingKnifeContext {
 
