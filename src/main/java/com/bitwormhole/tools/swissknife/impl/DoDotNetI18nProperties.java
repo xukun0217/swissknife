@@ -16,8 +16,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -47,6 +49,12 @@ public class DoDotNetI18nProperties {
 	public static Runnable dotNetFromProp(KnifeContext kc) {
 		Task task = new Task(kc);
 		task.resxProc = new ResxFromPropProc(task);
+		return new Walker(task);
+	}
+
+	public static Runnable dotNetResxRepair(KnifeContext kc) {
+		Task task = new Task(kc);
+		task.resxProc = new ResxRepairProc(task);
 		return new Walker(task);
 	}
 
@@ -227,7 +235,9 @@ public class DoDotNetI18nProperties {
 
 			final String name = path.getName();
 			final File dir = path.getParentFile();
-			final String raw_name = name.substring(0, name.length() - suffix.length()) + ".resx";
+			final String raw_name = name.substring(0,
+					name.length() - suffix.length())
+					+ ".resx";
 
 			File raw_resx = new File(dir, raw_name);
 			File prop_file = new File(this.task.prop_dir, name + ".txt"); // ".properties");
@@ -273,7 +283,8 @@ public class DoDotNetI18nProperties {
 
 		public Document loadXML(File file) {
 			try {
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilderFactory factory = DocumentBuilderFactory
+						.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				return builder.parse(file);
 			} catch (SAXException | IOException e) {
@@ -342,14 +353,21 @@ public class DoDotNetI18nProperties {
 				}
 				output = new FileOutputStream(file);
 				writer = new OutputStreamWriter(output, enc);
-				writer.append("# ").append(file.getName()).append(newline).append(newline);
-				Enumeration<Object> keys = prop.keys();
-				for (; keys.hasMoreElements();) {
-					String key = keys.nextElement().toString();
+				writer.append("# ").append(file.getName()).append(newline)
+						.append(newline);
+				List<String> keys = new ArrayList<String>();
+				Set<Object> okeys = prop.keySet();
+				for (Object ok : okeys) {
+					keys.add(ok.toString());
+				}
+				Collections.sort(keys);
+				for (String key : keys) {
 					String value = prop.getProperty(key);
-					writer.append(key).append('=').append(value).append(newline);
+					writer.append(key).append('=').append(value)
+							.append(newline);
 					// out.println(key + " = " + value);
 				}
+				writer.append(newline);
 				writer.flush();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -411,6 +429,57 @@ public class DoDotNetI18nProperties {
 			// TODO Auto-generated method stub
 
 		}
+	}
+
+	static class ResxRepairProc implements ResxProcessing {
+
+		private final Task task;
+
+		public ResxRepairProc(Task task) {
+			this.task = task;
+		}
+
+		@Override
+		public void process(ResxGroup resx) {
+			final File def_file = resx.theDefault;
+			final File ref_file = this.forFile(".en-US.resx", def_file);
+			final List<String> slist = task.suffix_list;
+			for (String suffix : slist) {
+				File target = this.forFile(suffix, def_file);
+				if (!target.exists()) {
+					out.println("create file " + target);
+					this.copyFile(ref_file, target);
+				}
+			}
+		}
+
+		private void copyFile(File src, File dst) {
+			InputStream input = null;
+			OutputStream output = null;
+			try {
+				input = new FileInputStream(src);
+				output = new FileOutputStream(dst);
+				IOTools.pump(input, output, null);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				IOTools.close(output);
+				IOTools.close(input);
+			}
+		}
+
+		private File forFile(String suffix, File theDefault) {
+			final File dir = theDefault.getParentFile();
+			final String name = theDefault.getName();
+			final int i = name.lastIndexOf('.');
+			final String p1 = name.substring(0, i);
+			final String p2 = name.substring(i);
+			if (!p2.equals(".resx")) {
+				throw new RuntimeException("bad default.resx name: " + name);
+			}
+			return new File(dir, p1 + suffix);
+		}
+
 	}
 
 	static class ResxToPropProc implements ResxProcessing {
