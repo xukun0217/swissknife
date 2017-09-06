@@ -6,7 +6,9 @@ import org.junit.Test;
 
 import test.swissknife.helper.TestingHelper;
 
+import com.bitwormhole.tools.swissknife.DotNetI18nFromProperties;
 import com.bitwormhole.tools.swissknife.DotNetI18nResxRepair;
+import com.bitwormhole.tools.swissknife.DotNetI18nToProperties;
 import com.bitwormhole.tools.swissknife.context.KnifeMojo;
 
 public class DotNetI18nTest {
@@ -15,8 +17,8 @@ public class DotNetI18nTest {
 	public void test() {
 
 		this.run(new DotNetI18nResxRepair());
-		// this.run(new DotNetI18nToProperties());
-		// this.run(new DotNetI18nFromProperties());
+		this.run(new DotNetI18nToProperties());
+		this.run(new DotNetI18nFromProperties());
 
 	}
 

@@ -25,9 +25,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
 
 import com.bitwormhole.tools.swissknife.DotNetI18nProperties;
@@ -377,6 +381,15 @@ public class DoDotNetI18nProperties {
 			}
 		}
 
+		public void save(Document dom, File file) {
+			out.println("write XML to " + file);
+			final DOMImplementationLS ls;
+			final DOMImplementation impl = dom.getImplementation();
+			ls = (DOMImplementationLS) impl.getFeature("LS", "3.0");
+			final LSSerializer ser = ls.createLSSerializer();
+			ser.writeToURI(dom, file.toURI().toString());
+		}
+
 	}
 
 	interface ResxProcessing {
@@ -426,8 +439,80 @@ public class DoDotNetI18nProperties {
 
 		@Override
 		public void process(ResxGroup resx) {
-			// TODO Auto-generated method stub
+			Map<String, ResxPair> map = resx.pairs;
+			for (String key : map.keySet()) {
+				ResxPair pair = map.get(key);
+				this.updateXML(pair);
+			}
+		}
 
+		private void updateXML(ResxPair pair) {
+			final File f_xml = pair.i18nResx;
+			final File f_prop = pair.properties;
+			if (!f_xml.exists()) {
+				throw new RuntimeException("file not exists" + f_xml);
+			} else if (!f_prop.exists()) {
+				throw new RuntimeException("file not exists" + f_prop);
+			}
+			final ResxIO io = new ResxIO();
+			final Document dom = io.loadXML(f_xml);
+			final Properties prop = io.loadProperties(f_prop);
+			final Enumeration<Object> keys = prop.keys();
+			int dirty = 0;
+			for (; keys.hasMoreElements();) {
+				String key = keys.nextElement().toString();
+				String value = prop.getProperty(key);
+				if (this.putData(key, value, dom)) {
+					dirty++;
+				}
+			}
+			if (dirty > 0) {
+				io.save(dom, f_xml);
+			}
+		}
+
+		private boolean putData(String key, String value, Document dom) {
+			Element tag_data = this.findData(key, dom);
+			if (tag_data == null) {
+				tag_data = dom.createElement("data");
+				tag_data.setAttribute("name", key);
+				tag_data.setAttribute("xml:space", "preserve");
+			} else {
+				final String v1 = value.trim();
+				final String v2 = tag_data.getTextContent().trim();
+				if (v1.equals(v2)) {
+					return false;
+				} else {
+					this.clean(tag_data);
+				}
+			}
+			Element tag_value = dom.createElement("value");
+			tag_data.appendChild(tag_value);
+			tag_value.setTextContent(value);
+			return true;
+		}
+
+		private void clean(Element ele) {
+			for (int tout = 100; tout > 0; --tout) {
+				final Node ch = ele.getFirstChild();
+				if (ch == null) {
+					break;
+				} else {
+					ele.removeChild(ch);
+				}
+			}
+		}
+
+		private Element findData(String name, Document dom) {
+			NodeList nlist = dom.getElementsByTagName("data");
+			for (int i = nlist.getLength() - 1; i >= 0; --i) {
+				Element ele = (Element) nlist.item(i);
+				String n2 = ele.getAttribute("name");
+				if (name.equals(n2)) {
+					return ele;
+				}
+			}
+			return null;
 		}
 	}
 
