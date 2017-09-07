@@ -1,4 +1,4 @@
-package com.bitwormhole.tools.swissknife.utils;
+package com.bitwormhole.swissknife.utils;
 
 import java.io.Closeable;
 import java.io.IOException;

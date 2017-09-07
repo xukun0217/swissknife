@@ -1,10 +1,6 @@
 package com.bitwormhole.swissknife.cli;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,10 +32,8 @@ public class ParamLoader {
 	}
 
 	private File loadPWD() {
-		Map<String, String> env = System.getenv();
-		PwdGetter pg = new PwdGetter(env);
-		String path = pg.get();
-		return new File(path);
+		PwdGetter pg = new PwdGetter();
+		return pg.getPWD();
 	}
 
 	private ApplicationContext loadConfig(SwissknifeParam param) {
@@ -65,41 +59,11 @@ public class ParamLoader {
 		throw new RuntimeException(msg);
 	}
 
-	private class PwdGetter {
+	private class PwdGetter extends WorkingDirectoryGetter {
 
-		private final Map<String, String> map;
-
-		public PwdGetter(Map<String, String> env) {
-			this.map = env;
+		public PwdGetter() {
 		}
 
-		public String get() {
-
-			if (this.isUbuntu()) {
-				return map.get("PWD");
-
-			} else {
-				this.printEnv();
-				throw new RuntimeException("unknow system");
-			}
-
-		}
-
-		private void printEnv() {
-			// for DEBUG
-			List<String> keys = new ArrayList<String>(map.keySet());
-			Collections.sort(keys);
-			for (String key : keys) {
-				String value = map.get(key);
-				String str = String.format("  %40s = %s", key, value);
-				System.out.println(str);
-			}
-		}
-
-		private boolean isUbuntu() {
-			String session = this.map.get("SESSION");
-			return "ubuntu".equalsIgnoreCase(session);
-		}
 	}
 
 }

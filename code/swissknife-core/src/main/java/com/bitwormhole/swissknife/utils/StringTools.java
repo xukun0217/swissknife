@@ -1,4 +1,4 @@
-package com.bitwormhole.tools.swissknife.utils;
+package com.bitwormhole.swissknife.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;

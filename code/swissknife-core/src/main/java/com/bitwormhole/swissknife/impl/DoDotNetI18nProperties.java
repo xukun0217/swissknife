@@ -1,4 +1,4 @@
-package com.bitwormhole.tools.swissknife.impl;
+package com.bitwormhole.swissknife.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,9 +34,10 @@ import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
 
+import com.bitwormhole.swissknife.AbstractAction;
+import com.bitwormhole.swissknife.PropertyTable;
 import com.bitwormhole.swissknife.context.KnifeContext;
-import com.bitwormhole.tools.swissknife.DotNetI18nProperties;
-import com.bitwormhole.tools.swissknife.utils.IOTools;
+import com.bitwormhole.swissknife.utils.IOTools;
 
 public class DoDotNetI18nProperties {
 
@@ -44,47 +45,43 @@ public class DoDotNetI18nProperties {
 	static final String enc = "UTF-8";
 	static final String newline = "\r\n";
 
-	public static Runnable dotNetToProp(KnifeContext kc) {
-		Task task = new Task(kc);
+	public static Runnable dotNetToProp(KnifeContext kc, AbstractAction action) {
+		Task task = new Task(kc, action);
 		task.resxProc = new ResxToPropProc(task);
 		return new Walker(task);
 	}
 
-	public static Runnable dotNetFromProp(KnifeContext kc) {
-		Task task = new Task(kc);
+	public static Runnable dotNetFromProp(KnifeContext kc, AbstractAction action) {
+		Task task = new Task(kc, action);
 		task.resxProc = new ResxFromPropProc(task);
 		return new Walker(task);
 	}
 
-	public static Runnable dotNetResxRepair(KnifeContext kc) {
-		Task task = new Task(kc);
+	public static Runnable dotNetResxRepair(KnifeContext kc,
+			AbstractAction action) {
+		Task task = new Task(kc, action);
 		task.resxProc = new ResxRepairProc(task);
 		return new Walker(task);
 	}
 
 	private static class Task {
 
-		private final File pom;
-		private Properties config;
-		private File config_file;
 		private ArrayList<String> suffix_list;
 		private File prop_dir;
+		private KnifeContext context;
 		private final Map<String, ResxGroup> resxTable;
 		private ResxProcessing resxProc;
+		private final AbstractAction action;
 
-		public Task(KnifeContext kc) {
-			this.pom = kc.getKnifeXML();
+		public Task(KnifeContext kc, AbstractAction action) {
+			this.context = kc;
+			this.action = action;
 			this.resxTable = new HashMap<String, ResxGroup>();
 		}
 
 		private String getProperty(String key) {
-			String value = this.config.getProperty(key);
-			if (value == null) {
-				String fmt = "need property[%s] in file[%s].";
-				String msg = String.format(fmt, key, this.config_file);
-				throw new RuntimeException(msg);
-			}
-			return value;
+			PropertyTable pt = action.getProperties();
+			return pt.getRequiredProperty(key);
 		}
 
 		public ResxGroup getResx(File raw_resx) {
@@ -119,8 +116,6 @@ public class DoDotNetI18nProperties {
 
 			try {
 
-				out.println("POM = " + this.task.pom);
-
 				this.loadConfig();
 				this.loadSuffixList();
 				this.walk();
@@ -148,7 +143,7 @@ public class DoDotNetI18nProperties {
 		private void walk() {
 			String project_dir = task.getProperty("project.directory");
 			String prop_dir = task.getProperty("properties.directory");
-			final File dir = task.pom.getParentFile();
+			final File dir = task.context.getKnifeXML().getParentFile();
 			File proj_path = new File(dir, project_dir);
 			File prop_path = new File(dir, prop_dir);
 			out.println("project.directory    = " + proj_path);
@@ -195,20 +190,7 @@ public class DoDotNetI18nProperties {
 		}
 
 		private void loadConfig() throws IOException {
-			InputStream in = null;
-			try {
-				Class<?> ref = DotNetI18nProperties.class;
-				String name = ref.getName() + ".properties";
-				File dir = task.pom.getParentFile();
-				File file = new File(dir, name);
-				in = new FileInputStream(file);
-				Properties prop = new Properties();
-				prop.load(in);
-				task.config = prop;
-				task.config_file = file;
-			} finally {
-				IOTools.close(in);
-			}
+
 		}
 	}
 

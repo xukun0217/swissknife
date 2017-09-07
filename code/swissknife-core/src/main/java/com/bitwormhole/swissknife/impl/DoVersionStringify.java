@@ -1,13 +1,9 @@
-package com.bitwormhole.tools.swissknife;
+package com.bitwormhole.swissknife.impl;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.util.Calendar;
 import java.util.Properties;
 
@@ -21,14 +17,14 @@ import org.eclipse.jgit.lib.RefDatabase;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 
-import com.bitwormhole.swissknife.KnifeAction;
+import com.bitwormhole.swissknife.AbstractAction;
+import com.bitwormhole.swissknife.PropertyTable;
 import com.bitwormhole.swissknife.context.KnifeContext;
-import com.bitwormhole.tools.swissknife.utils.IOTools;
-import com.bitwormhole.tools.swissknife.utils.StringTools;
-import com.google.gson.Gson;
+import com.bitwormhole.swissknife.utils.IOTools;
+import com.bitwormhole.swissknife.utils.StringTools;
 import com.google.gson.GsonBuilder;
 
-public class VersionStringify implements KnifeAction {
+public class DoVersionStringify {
 
 	interface PropKey {
 
@@ -40,29 +36,6 @@ public class VersionStringify implements KnifeAction {
 		String commit_time___x = "commit.time";
 		String commit_time_str = "commit.time.string";
 		String version_str___x = "version.string";
-
-	}
-
-	public static class Config {
-
-		public String outputPropertiesFile;
-		public String outputVersionFile;
-
-		public String getOutputPropertiesFile() {
-			return outputPropertiesFile;
-		}
-
-		public void setOutputPropertiesFile(String outputPropertiesFile) {
-			this.outputPropertiesFile = outputPropertiesFile;
-		}
-
-		public String getOutputVersionFile() {
-			return outputVersionFile;
-		}
-
-		public void setOutputVersionFile(String outputVersionFile) {
-			this.outputVersionFile = outputVersionFile;
-		}
 
 	}
 
@@ -84,37 +57,16 @@ public class VersionStringify implements KnifeAction {
 
 	private static class Helper {
 
-		private final Logger log;
-		private final Gson gson;
+		// private final Logger log;
+		// private final Gson gson;
 
 		private Helper(Logger log) {
 
 			GsonBuilder gb = new GsonBuilder();
 			gb.setPrettyPrinting();
 
-			this.gson = gb.create();
-			this.log = log;
-
-		}
-
-		public void makeConfigFileIfNeed(File file) {
-
-			if (file.exists()) {
-				return;
-			} else {
-				log.warn("create new config in " + file);
-			}
-
-			Config conf = new Config();
-			conf.setOutputPropertiesFile("version.properties");
-			conf.setOutputVersionFile("version.txt");
-
-			try {
-				String str = gson.toJson(conf);
-				StringTools.save(str, file, null);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			// this.gson = gb.create();
+			// this.log = log;
 
 		}
 
@@ -156,6 +108,13 @@ public class VersionStringify implements KnifeAction {
 		}
 	}
 
+	private static class Config {
+
+		public String outputPropertiesFile;
+		public String outputVersionFile;
+
+	}
+
 	private static class Task {
 
 		private final File base;
@@ -177,29 +136,14 @@ public class VersionStringify implements KnifeAction {
 			log.info("version-stringify: " + this.pom);
 		}
 
-		public void loadConfig() throws IOException {
-
-			InputStream in = null;
-			Reader rdr = null;
-
-			try {
-
-				String enc = "UTF-8";
-				String name = VersionStringify.class.getName() + ".json";
-				File file = new File(this.base, name);
-
-				helper.makeConfigFileIfNeed(file);
-
-				in = new FileInputStream(file);
-				rdr = new InputStreamReader(in, enc);
-
-				Config conf = helper.gson.fromJson(rdr, Config.class);
-				this.config = conf;
-			} finally {
-				IOTools.close(rdr);
-				IOTools.close(in);
-			}
-
+		public void loadConfig(AbstractAction action) throws IOException {
+			PropertyTable pt = action.getProperties();
+			Config conf = new Config();
+			conf.outputPropertiesFile = pt
+					.getRequiredProperty("output.properties.file");
+			conf.outputVersionFile = pt
+					.getRequiredProperty("output.version.file");
+			this.config = conf;
 		}
 
 		public void makeVersion() throws IOException {
@@ -285,15 +229,14 @@ public class VersionStringify implements KnifeAction {
 		}
 	}
 
-	@Override
-	public void execute(final KnifeContext kfc) {
+	public void execute(final KnifeContext kfc, AbstractAction action) {
 
 		try {
 
 			Task task = new Task(kfc);
 
 			task.init();
-			task.loadConfig();
+			task.loadConfig(action);
 			task.makeVersion();
 			task.save();
 

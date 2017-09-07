@@ -14,16 +14,34 @@ public class SwissknifeRunner extends SwissknifeParam implements Runnable {
 	@Override
 	public void run() {
 
-		ParamLoader pl = new ParamLoader();
-		KnifeContext kc = pl.loadKnifeContext(this);
-		String[] args = this.getArguments();
+		Exception error = null;
+		try {
+			ParamLoader pl = new ParamLoader();
+			KnifeContext kc = pl.loadKnifeContext(this);
+			String[] args = this.getArguments();
 
-		Logger log = kc.log();
-		log.info("PWD    = " + kc.getPWD());
-		log.info("Config = " + kc.getKnifeXML());
+			Logger log = kc.log();
+			log.info("PWD    = " + kc.getPWD());
+			log.info("Config = " + kc.getKnifeXML());
 
-		for (String cmd : args) {
-			this.exec(kc, cmd);
+			this.exec(kc, args[0]);
+
+		} catch (Exception e) {
+			error = e;
+		} finally {
+			this.printResult(error);
+		}
+
+	}
+
+	private void printResult(Exception error) {
+		if (error == null) {
+			System.out.println("==============================");
+			System.out.println("= SUCCESS                    =");
+			System.out.println("==============================");
+		} else {
+			// error.printStackTrace();
+			throw new RuntimeException(error);
 		}
 	}
 

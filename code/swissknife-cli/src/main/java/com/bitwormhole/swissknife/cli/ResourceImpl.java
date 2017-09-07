@@ -11,7 +11,7 @@ import java.net.URL;
 
 import org.springframework.core.io.Resource;
 
-import com.bitwormhole.tools.swissknife.utils.IOTools;
+import com.bitwormhole.swissknife.utils.IOTools;
 
 public class ResourceImpl implements Resource {
 

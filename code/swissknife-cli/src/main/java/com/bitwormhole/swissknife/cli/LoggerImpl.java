@@ -704,9 +704,8 @@ public class LoggerImpl implements Logger {
 	}
 
 	@Override
-	public void warn(String arg0) {
-		throw new RuntimeException("no impl");
-
+	public void warn(String text) {
+		this.out.println(Prefix.warn_ + text);
 	}
 
 	@Override
