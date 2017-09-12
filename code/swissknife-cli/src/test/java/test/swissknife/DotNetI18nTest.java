@@ -9,10 +9,13 @@ public class DotNetI18nTest {
 	@Test
 	public void test() {
 
-		String[] args = { "dotnet-i18n-resx-repair",
+		String[] array = { "dotnet-i18n-resx-repair",
 				"dotnet-i18n-to-properties", "dotnet-i18n-from-properties" };
 
-		TestingRunner.run(args);
+		for (String cmd : array) {
+			String[] args = { cmd };
+			TestingRunner.run(args);
+		}
 
 	}
 

@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
 
@@ -158,6 +159,8 @@ public class DoDotNetI18nProperties {
 				return;
 			} else if (!path.exists()) {
 				return;
+			} else if (!this.accept(path)) {
+				return;
 			}
 
 			if (path.isDirectory()) {
@@ -171,6 +174,22 @@ public class DoDotNetI18nProperties {
 				this.handler.onFile(path, this);
 			}
 
+		}
+
+		private boolean accept(File path) {
+
+			if (path.isDirectory()) {
+				final String name = path.getName();
+				if (name == null) {
+					return false;
+				} else if (name.equals("bin")) {
+					return false;
+				} else if (name.equals("target")) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		private void loadSuffixList() {
@@ -364,12 +383,27 @@ public class DoDotNetI18nProperties {
 		}
 
 		public void save(Document dom, File file) {
-			out.println("write XML to " + file);
-			final DOMImplementationLS ls;
-			final DOMImplementation impl = dom.getImplementation();
-			ls = (DOMImplementationLS) impl.getFeature("LS", "3.0");
-			final LSSerializer ser = ls.createLSSerializer();
-			ser.writeToURI(dom, file.toURI().toString());
+			OutputStream os = null;
+			try {
+				out.println("write XML to " + file);
+				final DOMImplementationLS ls;
+				final DOMImplementation impl = dom.getImplementation();
+				ls = (DOMImplementationLS) impl.getFeature("LS", "3.0");
+				final LSSerializer ser = ls.createLSSerializer();
+				final LSOutput output = ls.createLSOutput();
+
+				os = new FileOutputStream(file);
+				// os = System.out;
+
+				output.setEncoding(enc);
+				output.setByteStream(os);
+				ser.write(dom, output);
+
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} finally {
+				IOTools.close(os);
+			}
 		}
 
 	}
@@ -459,6 +493,7 @@ public class DoDotNetI18nProperties {
 				tag_data = dom.createElement("data");
 				tag_data.setAttribute("name", key);
 				tag_data.setAttribute("xml:space", "preserve");
+				dom.getDocumentElement().appendChild(tag_data);
 			} else {
 				final String v1 = value.trim();
 				final String v2 = tag_data.getTextContent().trim();
