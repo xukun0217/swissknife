@@ -1,0 +1,28 @@
+
+
+[windows]
+
+1. 新建一个文件夹，命名为“.knife” ;
+2. 该文件夹包含以下内容：
+	{.knife}/bin/knife.bat
+	{.knife}/bin/knife.jar
+	{.knife}/bin/ls.bat
+
+2.1. knife.bat 的内容如下
+		java -jar {.knife}\bin\knife.jar  %1 %2 %3 %4 %5
+
+2.2. ls.bat 的内容如下
+		dir
+
+2.3. knife.jar 通过maven生成，
+	先在 code 下键入命令
+		mvn clean
+		mvn install
+	然后在 code/swissknife-cli 下键入命令
+		mvn assembly:assembly
+	此时在文件夹“target”中生成了“swissknife-cli-jar-with-dependencies.jar”文件，
+	把这个文件改名为“knife.jar”，复制到“{.knife}/bin”.
+	
+3. 设置系统环境变量，在“PATH”中添加路径“{.knife}/bin”
+
+4. 搞定
